@@ -7,7 +7,7 @@ import java.util.Map;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,16 +35,30 @@ class GoalController {
 	@Autowired
 	private SequenceGeneratorService sequenceGeneratorService;
 
+	@Value("${eureka.instance.instanceId}")
+	private Integer instanceId;
+
 	@GetMapping("/goals")
-	public List<Goal> getAllGoals() {
-		return goalRepository.findAll();
+	public Map getAllGoals() {
+		Map result = new HashMap();
+
+		result.put("instanceId", instanceId);
+		result.put("content", goalRepository.findAll());
+
+		return result;
 	}
 
 	@GetMapping("/goals/{id}")
-	public ResponseEntity<Goal> getGoalById(@PathVariable(value = "id") long id) throws ResourceNotFoundException {
-		return ResponseEntity.ok().body(goalRepository.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Goal not found for this id :: " + id)));
+	public Map getGoalById(@PathVariable(value = "id") long id) {
+		Map result = new HashMap();
+		result.put("instanceId", instanceId);
+		try {
+			result.put("content", goalRepository.findById(id).get());
+		} catch (Exception e) {
+			result.put("content", "Goal not found for this id :: " + id);
+		}
 
+		return result;
 	}
 
 	@PostMapping("/goals")
